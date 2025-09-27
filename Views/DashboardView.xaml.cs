@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -9,25 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace POS
+namespace POS.Views
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Lógica de interacción para DashboardView.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class DashboardView : UserControl
     {
-        public MainWindow()
+        public DashboardView()
         {
             InitializeComponent();
         }
-
-        private void OpenMenuButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button)
-            {
-                button.ContextMenu.IsOpen = true;
-            }
-        }
-
     }
 }
