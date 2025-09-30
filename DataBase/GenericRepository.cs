@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,38 +10,39 @@ namespace POS.DataBase
 {
     internal class GenericRepository<T> where T : class
     {
-        internal ObservableCollection<T> Get()
+        internal async Task<ObservableCollection<T>> GetAsync()
         {
             using( var context = new DataBaseContext())
             {
-                return new ObservableCollection<T>(context.Set<T>().ToList());
+                var list = await context.Set<T>().ToListAsync();
+                return new ObservableCollection<T>(list);
             }
         }
 
-        internal void Add(T entity)
+        internal async Task AddAsync(T entity)
         {
             using (var context = new DataBaseContext())
             {
-                context.Set<T>().Add(entity);
-                context.SaveChanges();
+                await context.Set<T>().AddAsync(entity);
+                await context.SaveChangesAsync();
             }
         }
 
-        internal void Delete(T entity)
+        internal async Task DeleteAsync(T entity)
         {
             using (var context = new DataBaseContext())
             {
                 context.Set<T>().Remove(entity);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
 
-        internal void Update(T entity)
+        internal async Task UpdateAsync(T entity)
         {
             using (var context = new DataBaseContext())
             {
                 context.Set<T>().Update(entity);
-                context.SaveChanges();            
+                await context.SaveChangesAsync();
             }
         }
     }

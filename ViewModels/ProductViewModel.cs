@@ -26,10 +26,11 @@ namespace POS.ViewModels
         {
             _productRepository = new GenericRepository<Product>();
             _product = new Product();
-            LoadProducts();
-            AddCommand = new RelayCommand(AddExecute, AddCanExecute);
-            DeleteCommand = new RelayCommand(DeleteExecute, DeleteCanExecute);
-            UpdateCommand = new RelayCommand(UpdateExecute, UpdateCanExecute);
+            Task.Run(async () => await LoadProductsAsync());
+
+            AddCommand = new AsyncCommand(AddExecuteAsync, AddCanExecute);
+            DeleteCommand = new AsyncCommand(DeleteExecuteAsync, DeleteCanExecute);
+            UpdateCommand = new AsyncCommand(UpdateExecuteAsync, UpdateCanExecute);
         }
 
         public Product Product
@@ -88,30 +89,31 @@ namespace POS.ViewModels
             }
         }
 
-        private void AddExecute(object obj)
+        private async Task AddExecuteAsync(object obj)
         {
-            _productRepository.Add(Product);
-            LoadProducts();
+            await _productRepository.AddAsync(Product);
+            await LoadProductsAsync();
             Product = new Product();
         }
         private bool AddCanExecute(object obj)
         {
             return true;
         }
-        private void DeleteExecute(object obj)
+
+        private async Task DeleteExecuteAsync(object obj)
         {
-            _productRepository.Delete(Product);
-            LoadProducts();
+            await _productRepository.DeleteAsync(Product);
+            await LoadProductsAsync();
             Product = new Product();
         }
         private bool DeleteCanExecute(object obj)
         {
             return true;
         }
-        private void UpdateExecute(object obj)
+        private async Task UpdateExecuteAsync(object obj)
         {
-            _productRepository.Update(Product);
-            LoadProducts();
+            await _productRepository.UpdateAsync(Product);
+            await LoadProductsAsync();
             Product = new Product();
         }
         private bool UpdateCanExecute(object obj)
@@ -119,9 +121,9 @@ namespace POS.ViewModels
             return true;
         }
         
-        private void LoadProducts()
+        private async Task LoadProductsAsync()
         {
-            _products = _productRepository.Get();
+            _products = await _productRepository.GetAsync();
             OnPropertyChanged(nameof(Products));
         }
     }

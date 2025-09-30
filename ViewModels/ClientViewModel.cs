@@ -27,10 +27,10 @@ namespace POS.ViewModels
         {
             _clientRepository = new GenericRepository<Client>();
             _client = new Client();
-            LoadClients();
-            AddCommand = new RelayCommand(AddExecute, AddCanExecute);
-            DeleteCommand = new RelayCommand(DeleteExecute, DeleteCanExecute);
-            UpdateCommand = new RelayCommand(UpdateExecute, UpdateCanExecute);
+            Task.Run(async () => await LoadClientsAsync());
+            AddCommand = new AsyncCommand(AddExecuteAsync, AddCanExecute);
+            DeleteCommand = new AsyncCommand(DeleteExecuteAsync, DeleteCanExecute);
+            UpdateCommand = new AsyncCommand(UpdateExecuteAsync, UpdateCanExecute);
         }
 
 
@@ -94,17 +94,17 @@ namespace POS.ViewModels
             return true;
         }
 
-        private void AddExecute(object obj)
+        private async Task AddExecuteAsync(object obj)
         {
-            _clientRepository.Add(Client);
-            LoadClients();
+            await _clientRepository.AddAsync(Client);
+            await LoadClientsAsync();
             Client = new Client();
         }
 
-        private void DeleteExecute(object obj)
+        private async Task DeleteExecuteAsync(object obj)
         {
-            _clientRepository.Delete(Client);
-            LoadClients();
+            await _clientRepository.DeleteAsync(Client);
+            await LoadClientsAsync();
             Client = new Client();
         }
 
@@ -118,16 +118,16 @@ namespace POS.ViewModels
             return SelectedClient != null;
         }
 
-        private void UpdateExecute(object obj)
+        private async Task UpdateExecuteAsync(object obj)
         {
-            _clientRepository.Update(Client);
-            LoadClients();
+            await _clientRepository.UpdateAsync(Client);
+            await LoadClientsAsync();
             Client = new Client();
         }
 
-        private void LoadClients()
+        private async Task LoadClientsAsync()
         {
-            _clients = _clientRepository.Get();
+            _clients = await _clientRepository.GetAsync();
             OnPropertyChanged(nameof(Clients));
         }
     }
