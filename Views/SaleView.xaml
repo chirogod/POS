@@ -42,8 +42,8 @@
 
                     <Button Grid.Column="2">
                         <StackPanel Orientation="Vertical">
-                            <fa:IconImage Icon="List" Style="{StaticResource menuButtonIcon}" />
-                            <TextBlock Text="Listado de ventas" Style="{StaticResource menuButtonText}" />
+                            <fa:IconImage Icon="List" />
+                            <TextBlock Text="Listado de ventas"/>
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -91,6 +91,7 @@
                         BorderBrush="#0d0d0d"
                         Background="#fdfdfd" >
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding SelectedProduct.Description}" VerticalAlignment="Center" Margin="5,0"/>
                         <TextBlock Text="Cantidad:" VerticalAlignment="Center" Margin="5,0"/>
                         <TextBox Width="50"
                                  Text="{Binding SaleItemQuantity, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:F1}'}"
@@ -122,6 +123,7 @@
                                     <GridViewColumn Header="Producto" Width="100" DisplayMemberBinding="{Binding Product.Description}"/>
                                     <GridViewColumn Header="Cantidad" DisplayMemberBinding="{Binding Quantity}"/>
                                     <GridViewColumn Header="Precio Unitario" DisplayMemberBinding="{Binding SalePrice, StringFormat=C}"/>
+                                    <GridViewColumn Header="Dcto" DisplayMemberBinding="{Binding Discount}"/>
                                     <GridViewColumn Header="Subtotal" DisplayMemberBinding="{Binding Total, StringFormat=C}"/>
                                 </GridView>
                             </ListView.View>
@@ -163,6 +165,17 @@
                         </DataGrid>
                     </StackPanel>
                 </Border>
+                <TextBlock Text="Observaciones"
+                            FontWeight="SemiBold"
+                            Margin="0,0,0,5" />
+
+                <Border BorderBrush="Gray"
+                        BorderThickness="1"
+                        Padding="5">
+                    <StackPanel>
+                        <TextBox Text="{Binding Sale.Observations, Mode=TwoWay}"></TextBox>
+                    </StackPanel>
+                </Border>
                 <Separator Margin="0,15,0,15"/>
                 <TextBlock Text="Resumen de la Venta" FontWeight="SemiBold"/>
                 <StackPanel>
@@ -172,7 +185,11 @@
                 <Button Content="Completar Venta"
                         Command="{Binding SaveSaleCommand}"
                         Margin="0,15,0,0"/>
+                
+                
+                
             </StackPanel>
+            
         </Border>
     </Grid>
 </UserControl>

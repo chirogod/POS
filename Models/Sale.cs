@@ -9,7 +9,7 @@ namespace POS.Models
 {
     internal class Sale : BaseViewModel
     {
-        private int _Id;
+        private int? _Id;
         private DateTime _DateTime;
         private decimal _SubTotal;
         private decimal _Discount;
@@ -19,7 +19,7 @@ namespace POS.Models
         public virtual ICollection<SaleItem> SaleItems { get; set; }
         public virtual Client Client { get; set; }
 
-        public int Id
+        public int? Id
         {
             get => _Id;
             set

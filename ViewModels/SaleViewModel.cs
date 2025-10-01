@@ -52,13 +52,21 @@ namespace POS.ViewModels
             _Clients = [];
             _SaleItems = [];
 
-            Task.Run(async () => await LoadSalesAsync());
-            Task.Run(async () => await LoadProductsAsync());
-            Task.Run(async () => await LoadClientsAsync());
+            LoadInitialDataAsync();
 
-            AddProductCommand = new RelayCommand(AddProductExecute, AddProductCanExecute);
-            RemoveProductCommand = new RelayCommand(RemoveProductExecute, RemoveProductCanExecute);
+            AddProductCommand = new AsyncCommand(AddProductExecuteAsync, AddProductCanExecute);
+            RemoveProductCommand = new AsyncCommand(RemoveProductExecuteAsync, RemoveProductCanExecute);
             SaveSaleCommand = new AsyncCommand(SaveSaleExecuteAsync, SaveSaleCanExecute);
+        }
+
+        private async void LoadInitialDataAsync()
+        {
+            // Ejecuta las cargas en paralelo para mejorar el rendimiento.
+            await Task.WhenAll(
+                LoadSalesAsync(),
+                LoadProductsAsync(),
+                LoadClientsAsync()
+            );
         }
         public Sale Sale
         {
@@ -164,14 +172,11 @@ namespace POS.ViewModels
                 }
             }
         }
-
         public int SaleItemDiscount
-
         {
             get => _SaleItemDiscount;
             set
             {
-
                if (_SaleItemDiscount != value)
                {
                     _SaleItemDiscount = value;
@@ -179,32 +184,21 @@ namespace POS.ViewModels
                }
             }
         }
-
-        private void AddProductExecute(object x)
+        private async Task AddProductExecuteAsync(object x)
         {
             if (SelectedProduct != null && SelectedProduct.Stock > 0 && SelectedProduct.Stock >= SaleItemQuantity)
             {
-                var existingItem = _SaleItems.FirstOrDefault(item => item.ProductId == SelectedProduct.Id);
-                if (existingItem != null)
+                var newSaleItem = new SaleItem
                 {
-                    existingItem.Quantity += SaleItemQuantity;
-                    OnPropertyChanged(nameof(SaleItems));
-                }
-                else
-                {
-                    var newSaleItem = new SaleItem
-                    {
-                        ProductId = SelectedProduct.Id,
-                        Quantity = SaleItemQuantity,
-                        SalePrice = SelectedProduct.SalePrice,
-                        Product = SelectedProduct,
-                        Discount = SaleItemDiscount
-                    };
-                    _SaleItems.Add(newSaleItem);
-                }
-                _Sale.SubTotal = _SaleItems.Sum(item => item.Total);
-                _Sale.Total = _Sale.SubTotal - _Sale.Discount;
-                OnPropertyChanged(nameof(Sale));
+                    ProductId = SelectedProduct.Id,
+                    Quantity = SaleItemQuantity,
+                    SalePrice = SelectedProduct.SalePrice,
+                    Product = SelectedProduct,
+                    Discount = SaleItemDiscount,
+                    Total = SelectedProduct.SalePrice - (((SelectedProduct.SalePrice * SaleItemQuantity )* SaleItemDiscount ) / 100)
+                };
+                _SaleItems.Add(newSaleItem);
+                _Sale.Total = _SaleItems.Sum(item => item.Total);
 
                 SaleItemQuantity = 1;
                 SaleItemDiscount = 0;
@@ -217,13 +211,13 @@ namespace POS.ViewModels
             return SelectedProduct != null && SelectedProduct.Stock > 0 && SaleItemQuantity > 0;
         }
 
-        private void RemoveProductExecute(object x)
+        private async Task RemoveProductExecuteAsync(object x)
         {
             if (SelectedItem != null)
             {
                 _SaleItems.Remove(SelectedItem);
                 _Sale.SubTotal = _SaleItems.Sum(item => item.Total);
-                OnPropertyChanged(nameof(Sale));
+                await Task.CompletedTask;
             }
         }
 
@@ -234,7 +228,7 @@ namespace POS.ViewModels
 
         private async Task SaveSaleExecuteAsync(object x)
         {
-            if (Sale.Total > 0 && SelectedClient != null)
+            if (Sale.Total > 0 && SelectedClient != null && Sale.Observations != null)
             {
                 _Sale.ClientId = SelectedClient.Id;
                 _Sale.DateTime = DateTime.Now;
@@ -243,19 +237,26 @@ namespace POS.ViewModels
                 _Sale.Total = Sale.SubTotal - (Sale.SubTotal * Sale.Discount / 100);
                 _Sale.Observations = Sale.Observations;
 
-                await _saleRepository.AddAsync(_Sale);
-
+                _Sale.SaleItems = new List<SaleItem>(_SaleItems);
                 foreach (var item in _Sale.SaleItems)
                 {
-                    var productInStock = _Products.FirstOrDefault(p => p.Id == item.ProductId);
-                    if (productInStock != null)
+                    item.Product = null;
+                }
+
+                await _saleRepository.AddAsync(_Sale);
+
+                foreach(var item in _SaleItems)
+                {
+                    var productToUpdate = _Products.FirstOrDefault(p => p.Id == item.ProductId);
+                    if(productToUpdate != null)
                     {
-                        productInStock.Stock -= (int)(decimal)item.Quantity;
-                        await _productRepository.UpdateAsync(productInStock);
+                        productToUpdate.Stock -= (int)item.Quantity;
+                        await _productRepository.UpdateAsync(productToUpdate);
                     }
                 }
 
                 await LoadSalesAsync();
+                await LoadProductsAsync();
                 _SaleItems.Clear();
                 SelectedClient = null;
                 Sale = new Sale();
@@ -265,7 +266,7 @@ namespace POS.ViewModels
         }
         private bool SaveSaleCanExecute(object x)
         {
-            return true;
+            return _SaleItems.Count > 0 && SelectedClient != null && !string.IsNullOrWhiteSpace(Sale.Observations);
         }
         public string SearchClientQuery
         {
